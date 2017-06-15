@@ -34,6 +34,14 @@ setup(
         # use requirements folder/files for apps
         'click',
     ],
+    # List additional groups of dependencies here (e.g. development
+    # dependencies). You can install these using the following syntax,
+    # for example:
+    # $ pip install -e .[dev,test]
+    extras_require={
+        # 'dev': ['restview'],
+        'test': ['pytest'],
+    },
     entry_points='''
         [console_scripts]
         pyp = pyp.cli:cli_entry
