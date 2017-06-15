@@ -32,9 +32,10 @@ setup(
     install_requires=[
         # use this for libraries; or
         # use requirements folder/files for apps
+        'click',
     ],
     entry_points='''
         [console_scripts]
-        pyp = pyp:cli_entry
+        pyp = pyp.cli:cli_entry
     ''',
 )
