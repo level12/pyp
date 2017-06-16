@@ -33,6 +33,7 @@ setup(
         # use this for libraries; or
         # use requirements folder/files for apps
         'click',
+        'sh',
     ],
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,

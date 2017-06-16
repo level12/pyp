@@ -12,4 +12,7 @@ pyp's Readme
 Introduction
 =======================
 
-Enter stuff here.  :)
+pyp (pronounced "pipe") helps you do so stuff in python projects.  Currently, available commands
+are:
+
+* release: prep and push a Python project to pypi
