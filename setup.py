@@ -1,7 +1,9 @@
 import os.path as osp
+import sys
 
 from setuptools import setup, find_packages
 
+PY2 = sys.version_info[0] == 2
 cdir = osp.abspath(osp.dirname(__file__))
 README = open(osp.join(cdir, 'readme.rst')).read()
 CHANGELOG = open(osp.join(cdir, 'changelog.rst')).read()
@@ -10,6 +12,18 @@ version_fpath = osp.join(cdir, 'pyp', 'version.py')
 version_globals = {}
 with open(version_fpath) as fo:
     exec(fo.read(), version_globals)
+
+
+require = [
+    'click',
+    'plumbum',
+    'six',
+    'twine',
+]
+
+if PY2:
+    require += ['pathlib']
+
 
 setup(
     name='pyp',
@@ -29,12 +43,7 @@ setup(
     packages=find_packages(exclude=[]),
     include_package_data=True,
     zip_safe=False,
-    install_requires=[
-        # use this for libraries; or
-        # use requirements folder/files for apps
-        'click',
-        'sh',
-    ],
+    install_requires=require,
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
     # for example:

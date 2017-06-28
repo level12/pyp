@@ -1,3 +1,6 @@
+from collections import namedtuple
+import datetime as dt
+
 from plumbum import local
 import pytest
 
@@ -31,15 +34,18 @@ Changelog
 ------------------------
 
 - some stuff
-"""
+""".lstrip()
+
+ProjectInfo = namedtuple('ProjectInfo', 'merge_1_hash merge_2_hash direct_commit_hash')
 
 
-def create_project(tmpdir, bail_after=None, setuppy_empty=False):
+def create_project(tmpdir, bail_after=None, setuppy_empty=False, tag_and_commit=False):
     setuppy = tmpdir.join('setup.py')
     tmpdir.join('something').ensure(dir=True)
     version_py = tmpdir.join('something', 'version.py')
     version_py.write('VERSION = "1.1"')
     tmpdir.join('changelog.rst').write(changelog_contents)
+    datatxt = tmpdir.join('data.txt')
 
     if setuppy_empty:
         setuppy.ensure(file=True)
@@ -54,6 +60,33 @@ def create_project(tmpdir, bail_after=None, setuppy_empty=False):
 
     git_c('add', '.')
     git_c('commit', '-m', 'initial commit')
+
+    git_c('checkout', '-b', 'branch1')
+    datatxt.write('a')
+    git_c('add', 'data.txt')
+    git_c('commit', '-m', 'add a')
+    git_c('checkout', 'master')
+    git_c('merge', '--no-ff', 'branch1')
+    merge_1_hash = git_c('rev-parse', '--short', 'HEAD').strip()
+
+    git_c('checkout', '-b', 'branch2')
+    datatxt.write('ab')
+    git_c('commit', '-am', 'add b')
+    git_c('checkout', 'master')
+    git_c('merge', '--no-ff', 'branch2')
+    merge_2_hash = git_c('rev-parse', '--short', 'HEAD').strip()
+
+    datatxt.write('abc')
+    git_c('commit', '-am', 'add c')
+    direct_commit_hash = git_c('rev-parse', '--short', 'HEAD').strip()
+
+    if tag_and_commit:
+        git_c('tag', 'release-0.1')
+        datatxt.write('abcd')
+        git_c('commit', '-am', 'add d')
+        direct_commit_hash = git_c('rev-parse', '--short', 'HEAD').strip()
+
+    return ProjectInfo(merge_1_hash, merge_2_hash, direct_commit_hash)
 
 
 class TestVerify:
@@ -91,8 +124,9 @@ class TestVerify:
 
 class TestRelease:
 
-    def run_release(self, tmpdir, version='1.2'):
-        return release.release(tmpdir.strpath, 'something', version)
+    def run_release(self, tmpdir, version='1.2', release_date=None):
+        release_date = release_date or dt.date(2017, 1, 2)
+        return release.release(tmpdir.strpath, 'something', version, release_date)
 
     def test_version_update(self, tmpdir):
         create_project(tmpdir)
@@ -101,12 +135,61 @@ class TestRelease:
         project = release.status(tmpdir.strpath)
         assert project.version == '1.2'
 
-    def test_changelog_update(self, tmpdir):
-        create_project(tmpdir)
+    def test_changelog_update_without_tag(self, tmpdir):
+        proj_info = create_project(tmpdir)
         self.run_release(tmpdir)
 
-        project = release.status(tmpdir.strpath)
-        assert project.version == '1.2'
+        release.status(tmpdir.strpath)
+        changelog_contents = tmpdir.join('changelog.rst').read()
+        expected_changelog = '''
+Changelog
+=========
+
+1.2 released 2017-01-02
+-----------------------
+
+- add c ({0.direct_commit_hash}_)
+- Merge branch 'branch2' ({0.merge_2_hash}_)
+- Merge branch 'branch1' ({0.merge_1_hash}_)
+
+.. _{0.direct_commit_hash}: http://some.thing/commit/{0.direct_commit_hash}
+.. _{0.merge_2_hash}: http://some.thing/commit/{0.merge_2_hash}
+.. _{0.merge_1_hash}: http://some.thing/commit/{0.merge_1_hash}
+
+
+1.0 released in the past
+------------------------
+
+- some stuff
+'''.lstrip().format(proj_info)
+
+        assert expected_changelog == changelog_contents
+
+    def test_changelog_update_with_tag(self, tmpdir):
+        proj_info = create_project(tmpdir, tag_and_commit=True)
+        self.run_release(tmpdir)
+
+        release.status(tmpdir.strpath)
+        changelog_contents = tmpdir.join('changelog.rst').read()
+        expected_changelog = '''
+Changelog
+=========
+
+1.2 released 2017-01-02
+-----------------------
+
+- add d ({0.direct_commit_hash}_)
+
+.. _{0.direct_commit_hash}: http://some.thing/commit/{0.direct_commit_hash}
+
+
+1.0 released in the past
+------------------------
+
+- some stuff
+'''.lstrip().format(proj_info)
+
+        assert expected_changelog == changelog_contents
 
 
 class TestStatus:
