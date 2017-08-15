@@ -74,4 +74,4 @@ def status(ctx, repo_dpath):
 
     click.echo('Name: {}'.format(status.name))
     click.echo('URL: {}'.format(status.url))
-    click.echo('Version: {}'.format(status.url))
+    click.echo('Version: {}'.format(status.version))
