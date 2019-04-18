@@ -12,14 +12,7 @@ pyp's Readme
 Introduction
 ============
 
-pyp (pronounced "pipe") helps you do so stuff in python projects.  Currently, available commands
-are:
-
-* release: bumps the version, updates the changelog (you then edit and commit)
-* publish:
-
-    * git: tag, push
-    * pypi: build sdist & wheel, upload
+pyp (pronounced "pipe") helps you automate the release of python packages
 
 Project Prep
 ============
@@ -28,13 +21,28 @@ There are a couple things you should do to make your project pyp compatible:
 
 1) Make sure you are `single-sourcing the version`_ of the project using the same method
    as this project.  See our `setup.py` and `pyp/version.py`.
-2) Create a `pyp.ini` file in the root of your project with the following content::
+2) Create a `pyp.ini` file in the root of your project with the following content and uncomment
+   defaults as needed.
 
     [pyp]
     # The relative path, from your project root, to the directory your project source lives.
     # Currently, this is how pyp finds the project's `version.py` file.
     source_dir = proj-app-dir
-
-3) Make sure the document title of `changelog.rst` is exactly `Changelog\n=========\n`.
+    # If your changelog file name is not changelog.rst, then you will also need:
+    # changelog_fname = CHANGES.rst
+    # If the header of you changelog file is not `Changelog\n=========\n`, then you will also need:
+    # changelog_doc_header = 'Some Value'
 
 .. _single-sourcing the version: https://packaging.python.org/guides/single-sourcing-package-version/#single-sourcing-the-version
+
+
+Usage
+=====
+
+To release a package, you will:
+
+1. Run `pyp status` to inspect the current state of the project and get any errors/warnings.
+2. Run `pyp release [version]` to generate the changelog & bump the version
+3. Inspect the changes from the previous command, alter changelog if needed, commit.
+4. Run `pyp publish` to build an sdist, wheel and push them to pypi with Twine.  Also tag the
+   most recent commit with the version and `github push --tags`.
