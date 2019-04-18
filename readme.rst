@@ -22,7 +22,7 @@ There are a couple things you should do to make your project pyp compatible:
 1) Make sure you are `single-sourcing the version`_ of the project using the same method
    as this project.  See our `setup.py` and `pyp/version.py`.
 2) Create a `pyp.ini` file in the root of your project with the following content and uncomment
-   defaults as needed.
+   defaults as needed::
 
     [pyp]
     # The relative path, from your project root, to the directory your project source lives.
