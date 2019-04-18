@@ -1,6 +1,7 @@
 from collections import namedtuple
 from functools import wraps
 import pathlib
+from os import path as osp
 import shutil
 
 from plumbum import local
@@ -9,7 +10,7 @@ import six
 
 
 git = local['git']
-python = local['python']
+python = local['python3']
 python_setup = python['setup.py']
 
 ProjectStatus = namedtuple('ProjectStatus', ['name', 'url', 'version'])
@@ -80,10 +81,21 @@ def git_log_revspan():
 
 
 @repo_handler
-def release(repo_dpath, src_dpath, version, release_date):
+def release(repo_dpath, config, version, release_date):
+    src_dpath = osp.join(repo_dpath, config['source_dir'])
+    changelog_fname = config.get('changelog_fname', 'changelog.rst')
+    changelog_doc_header = config.get('changelog_doc_header', u'Changelog\n=========\n')
+
     # Write the new version
-    with repo_dpath.joinpath(src_dpath, 'version.py').open('w') as version_fh:
-        version_fh.write(u"VERSION = '{}'\n".format(version))
+    with repo_dpath.joinpath(src_dpath, 'version.py').open('r+') as version_fh:
+        version_contents = version_fh.read()
+        if 'VERSION' in version_contents:
+            version_varname = 'VERSION'
+        else:
+            version_varname = '__version__'
+        version_fh.seek(0)
+        version_fh.write(u"{} = '{}'\n".format(version_varname, version))
+        version_fh.truncate()
 
     project = _status()
 
@@ -98,9 +110,8 @@ def release(repo_dpath, src_dpath, version, release_date):
     release_date_str = release_date.strftime('%Y-%m-%d')
     changelog_release_header = u'{} released {}'.format(version, release_date_str)
     changelog_release_header += u'\n' + u'-' * len(changelog_release_header)
-    changelog_doc_header = u'Changelog\n=========\n'
 
-    with repo_dpath.joinpath('changelog.rst').open('r+') as changelog_fh:
+    with repo_dpath.joinpath(changelog_fname).open('r+') as changelog_fh:
         changelog_doc_content = changelog_fh.read()
 
         if changelog_doc_header not in changelog_doc_content:
