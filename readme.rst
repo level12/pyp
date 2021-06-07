@@ -44,5 +44,5 @@ To release a package, you will:
 1. Run `pyp status` to inspect the current state of the project and get any errors/warnings.
 2. Run `pyp release [version]` to generate the changelog & bump the version
 3. Inspect the changes from the previous command, alter changelog if needed, commit.
-4. Run `pyp publish` to build an sdist, wheel and push them to pypi with Twine.  Also tag the
-   most recent commit with the version and `github push --tags`.
+4. Run `pyp publish` to build an sdist, wheel and push them to pypi with Twine.  Also it will tag
+   the most recent commit with the version push to remote (e.g. GitHub).
